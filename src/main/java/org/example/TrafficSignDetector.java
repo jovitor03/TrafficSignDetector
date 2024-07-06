@@ -16,7 +16,10 @@ import java.io.File;
 public class TrafficSignDetector {
     private final CascadeClassifier cascade;
     private final Scalar color = new Scalar(0, 255, 0);
+    private final JPanel containerPanel = new JPanel(new GridBagLayout());
+    private final JPanel labelsPanel = new JPanel();
     private JLabel processingLabel;
+    private JLabel timeLabel;
 
     public TrafficSignDetector(CascadeClassifier cascade) {
         this.cascade = cascade;
@@ -56,30 +59,31 @@ public class TrafficSignDetector {
         }
     }
 
-    public void addLabelsOnInterface(JFrame frame, String estimatedTimeText){
-        processingLabel = new JLabel("Processing video... It may take a while.");
-        processingLabel.setFont(new Font("Arial", Font.PLAIN, 20));
-        processingLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    public void addLabelsOnInterface(JFrame frame, String estimatedTimeText) {
+        SwingUtilities.invokeLater(() -> {
+            processingLabel = new JLabel("Processing video... It may take a while.");
+            processingLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+            processingLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JLabel timeLabel = new JLabel(estimatedTimeText);
-        timeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            timeLabel = new JLabel(estimatedTimeText);
+            timeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        JPanel labelsPanel = new JPanel();
-        labelsPanel.setLayout(new BoxLayout(labelsPanel, BoxLayout.Y_AXIS));
-        labelsPanel.add(processingLabel);
-        labelsPanel.add(timeLabel);
+            labelsPanel.setLayout(new BoxLayout(labelsPanel, BoxLayout.Y_AXIS));
+            labelsPanel.add(processingLabel);
+            labelsPanel.add(timeLabel);
 
-        labelsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        labelsPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+            labelsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            labelsPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-        JPanel containerPanel = new JPanel(new GridBagLayout());
-        containerPanel.add(labelsPanel);
+            containerPanel.add(labelsPanel);
 
-        frame.add(containerPanel, BorderLayout.CENTER);
+            frame.add(containerPanel, BorderLayout.CENTER);
 
-        frame.revalidate();
-        frame.repaint();
+            frame.revalidate();
+            frame.repaint();
+        });
     }
+
 
     public void detectTrafficSignsInVideo(String videoPath, JProgressBar progressBar, JFrame frame) {
         clearFolder("frames");
@@ -93,7 +97,7 @@ public class TrafficSignDetector {
             estimatedTimeText = "Estimated time: unknown";
         }
 
-        addLabelsOnInterface(frame, estimatedTimeText);
+        SwingUtilities.invokeLater(() -> addLabelsOnInterface(frame, estimatedTimeText));
 
         VideoCapture videoCapture = new VideoCapture(videoPath);
         if (!videoCapture.isOpened()) {
@@ -146,7 +150,7 @@ public class TrafficSignDetector {
                     }
                 }
                 progressBarConsole.append("] ").append(newPercentage).append("%");
-                System.out.print("\r" + progressBarConsole.toString());
+                System.out.print("\r" + progressBarConsole);
 
                 SwingUtilities.invokeLater(() -> progressBar.setValue(newPercentage));
                 percentage = newPercentage;
@@ -160,7 +164,10 @@ public class TrafficSignDetector {
 
         SwingUtilities.invokeLater(() -> {
             progressBar.setValue(100);
-            frame.remove(processingLabel);
+            labelsPanel.remove(processingLabel);
+            labelsPanel.remove(timeLabel);
+            containerPanel.remove(labelsPanel);
+            frame.remove(containerPanel);
             frame.revalidate();
             frame.repaint();
         });
@@ -183,9 +190,7 @@ public class TrafficSignDetector {
             fileNameWithoutExtension = path.substring(0, i);
         }
 
-        String resultPath = fileNameWithoutExtension + "_result." + extension;
-
-        return resultPath;
+        return fileNameWithoutExtension + "_result." + extension;
     }
 
     public int highlightTrafficSigns(Mat image, CascadeClassifier cascade, Scalar color) {

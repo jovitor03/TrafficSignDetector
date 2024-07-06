@@ -17,6 +17,7 @@ public class Main {
     private static JLabel imageLabel;
     private static JProgressBar progressBar;
     private static JLabel resultLabel;
+    private static final JPanel contentPanel = new JPanel();
 
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
 
@@ -64,9 +65,7 @@ public class Main {
                 File selectedFile = fileChooser.getSelectedFile();
                 String relativePath = videosBaseDir + "/" + selectedFile.getName();
 
-                if(resultLabel!= null){
-                    frame.remove(resultLabel);
-                }
+                removeImage(frame);
 
                 progressBar = new JProgressBar(0, 100);
                 progressBar.setPreferredSize(new Dimension(progressBar.getPreferredSize().width, 100));
@@ -87,9 +86,7 @@ public class Main {
                 String parentDirName = selectedFile.getParentFile().getName();
                 String relativePath = phoneVideosBaseDir + "/" + parentDirName + "/" + selectedFile.getName();
 
-                if(resultLabel!= null){
-                    frame.remove(resultLabel);
-                }
+                removeImage(frame);
 
                 progressBar = new JProgressBar(0, 100);
                 progressBar.setPreferredSize(new Dimension(progressBar.getPreferredSize().width, 100));
@@ -145,15 +142,36 @@ public class Main {
 
     private static void displayImage(JFrame frame, BufferedImage image) {
         if (imageLabel == null) {
-            ImageIcon icon = new ImageIcon(image);
-            imageLabel = new JLabel(icon);
-            frame.add(new JScrollPane(imageLabel), BorderLayout.CENTER);
+            imageLabel = new JLabel(new ImageIcon(image));
+            contentPanel.add(imageLabel, BorderLayout.CENTER);
         } else {
             imageLabel.setIcon(new ImageIcon(image));
         }
+        frame.add(contentPanel);
         frame.revalidate();
         frame.repaint();
     }
+
+    private static void removeImage(JFrame frame) {
+        if (imageLabel != null) {
+            contentPanel.remove(imageLabel);
+            imageLabel = null;
+            contentPanel.revalidate();
+            contentPanel.repaint();
+            frame.remove(contentPanel);
+            frame.revalidate();
+            frame.repaint();
+        }
+    }
+
+    private static void displayImage(JPanel videoPanel, BufferedImage image) {
+        JLabel imageLabel = new JLabel(new ImageIcon(image));
+        videoPanel.removeAll();
+        videoPanel.add(imageLabel);
+        videoPanel.revalidate();
+        videoPanel.repaint();
+    }
+
 
     public static void playVideo(JFrame frame, String videoPath) {
         frame.remove(progressBar);
@@ -166,6 +184,8 @@ public class Main {
         frame.add(resultLabel, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
+        JPanel videoPanel = new JPanel();
+        frame.add(videoPanel, BorderLayout.CENTER);
 
         new Thread(() -> {
             VideoCapture videoCapture = new VideoCapture(videoPath);
@@ -177,7 +197,7 @@ public class Main {
             Mat frameMat = new Mat();
             while (videoCapture.read(frameMat)) {
                 BufferedImage image = matToResizedBufferedImage(frameMat);
-                SwingUtilities.invokeLater(() -> displayImage(frame, image));
+                SwingUtilities.invokeLater(() -> displayImage(videoPanel, image));
                 try {
                     Thread.sleep(1000 / 60);
                 } catch (InterruptedException e) {
@@ -191,6 +211,13 @@ public class Main {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            SwingUtilities.invokeLater(() -> {
+                frame.remove(videoPanel);
+                frame.remove(resultLabel);
+                frame.revalidate();
+                frame.repaint();
+            });
         }).start();
     }
 }
