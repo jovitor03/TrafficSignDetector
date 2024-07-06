@@ -19,17 +19,11 @@ public class Main {
     public static void main(String[] args) {
         JFrame frame = createMainFrame();
 
-        JButton button1 = createButton("Select generic image", e -> {
-            FileProcessor.handleImageSelection(frame, IMAGES_BASE_DIR);
-        });
+        JButton button1 = createButton("Select generic image", e -> FileProcessor.handleImageSelection(frame, IMAGES_BASE_DIR));
 
-        JButton button2 = createButton("Select generic video", e -> {
-            FileProcessor.handleVideoSelection(frame, VIDEOS_BASE_DIR);
-        });
+        JButton button2 = createButton("Select generic video", e -> FileProcessor.handleVideoSelection(frame, VIDEOS_BASE_DIR));
 
-        JButton button3 = createButton("Select phone video", e -> {
-            FileProcessor.handleVideoSelection(frame, PHONE_VIDEOS_BASE_DIR);
-        });
+        JButton button3 = createButton("Select phone video", e -> FileProcessor.handleVideoSelection(frame, PHONE_VIDEOS_BASE_DIR));
 
         JPanel panel = createPanel(button1, button2, button3);
         frame.add(panel, BorderLayout.NORTH);

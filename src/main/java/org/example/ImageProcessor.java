@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 public class ImageProcessor {
     private static JLabel imageLabel;
     private static final JPanel contentPanel = new JPanel();
+    private static JLabel resultImageLabel = null;
 
     public static BufferedImage matToBufferedImage(Mat mat) {
         int type = BufferedImage.TYPE_BYTE_GRAY;
@@ -27,8 +28,8 @@ public class ImageProcessor {
     }
 
     public static BufferedImage matToResizedBufferedImage(Mat mat) {
-        int maxWidth = 1280;
-        int maxHeight = 1080;
+        int maxWidth = 1100;
+        int maxHeight = 800;
 
         int originalWidth = mat.width();
         int originalHeight = mat.height();
@@ -46,6 +47,22 @@ public class ImageProcessor {
     }
 
     public static void displayImage(JFrame frame, BufferedImage image) {
+        removeImageLabel(frame);
+        swapImage(frame, image);
+    }
+
+    public static void displayDetectedImage(JFrame frame, BufferedImage image, String imagePath) {
+        resultImageLabel = new JLabel("Result video saved at " + imagePath);
+        resultImageLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        resultImageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        frame.add(resultImageLabel, BorderLayout.SOUTH);
+        frame.revalidate();
+        frame.repaint();
+
+        swapImage(frame, image);
+    }
+
+    private static void swapImage(JFrame frame, BufferedImage image) {
         if (imageLabel == null) {
             imageLabel = new JLabel(new ImageIcon(image));
             contentPanel.add(imageLabel, BorderLayout.CENTER);
@@ -55,6 +72,15 @@ public class ImageProcessor {
         frame.add(contentPanel);
         frame.revalidate();
         frame.repaint();
+    }
+
+    public static void removeImageLabel(JFrame frame) {
+        if (resultImageLabel != null) {
+            frame.remove(resultImageLabel);
+            resultImageLabel = null;
+            frame.revalidate();
+            frame.repaint();
+        }
     }
 
     public static void removeImage(JFrame frame) {

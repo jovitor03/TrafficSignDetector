@@ -21,7 +21,7 @@ public class TrafficSignDetector {
     private static JLabel timeLabel;
 
     public static Mat detectTrafficSigns(String imagePath) {
-        String resultImagePath = FileProcessor.mantainFormat(imagePath);
+        String resultImagePath = FileProcessor.maintainFormat(imagePath);
 
         Mat image = Imgcodecs.imread(imagePath);
 
@@ -87,7 +87,7 @@ public class TrafficSignDetector {
         int frameRate = (int) videoCapture.get(Videoio.CAP_PROP_FPS);
         int totalFrames = (int) videoCapture.get(Videoio.CAP_PROP_FRAME_COUNT);
 
-        String resultVideoPath = FileProcessor.mantainFormat(videoPath);
+        String resultVideoPath = FileProcessor.maintainFormat(videoPath);
 
         VideoWriter videoWriter = new VideoWriter(resultVideoPath, VideoWriter.fourcc('X', '2', '6', '4'), frameRate, new Size(frameWidth, frameHeight), true);
         if (!videoWriter.isOpened()) {

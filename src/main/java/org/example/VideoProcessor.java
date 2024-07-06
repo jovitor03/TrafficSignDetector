@@ -11,7 +11,9 @@ public class VideoProcessor {
     public static JProgressBar progressBar;
     private static JLabel resultLabel;
 
-    public static JProgressBar createProgressBar() {
+    public static JProgressBar createProgressBar(JFrame frame) {
+        ImageProcessor.removeImageLabel(frame);
+
         progressBar = new JProgressBar(0, 100);
         progressBar.setPreferredSize(new Dimension(progressBar.getPreferredSize().width, 100));
         progressBar.setStringPainted(true);

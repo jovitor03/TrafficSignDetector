@@ -27,7 +27,7 @@ public class FileProcessor {
         }
     }
 
-    public static String mantainFormat(String path) {
+    public static String maintainFormat(String path) {
         String extension = "";
         int i = path.lastIndexOf('.');
         if (i > 0) {
@@ -58,7 +58,7 @@ public class FileProcessor {
             Timer timer = new Timer(3000, event -> {
                 Mat resultImage = TrafficSignDetector.detectTrafficSigns(relativePath);
                 if (resultImage != null) {
-                    ImageProcessor.displayImage(frame, ImageProcessor.matToResizedBufferedImage(resultImage));
+                    ImageProcessor.displayDetectedImage(frame, ImageProcessor.matToResizedBufferedImage(resultImage), relativePath);
                 }
             });
             timer.setRepeats(false);
@@ -81,7 +81,7 @@ public class FileProcessor {
 
             ImageProcessor.removeImage(frame);
 
-            JProgressBar progressBar = VideoProcessor.createProgressBar();
+            JProgressBar progressBar = VideoProcessor.createProgressBar(frame);
             frame.add(progressBar, BorderLayout.SOUTH);
 
             new Thread(() -> TrafficSignDetector.detectTrafficSignsInVideo(relativePath, VideoProcessor.progressBar, frame)).start();
