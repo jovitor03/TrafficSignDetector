@@ -1,223 +1,62 @@
 package org.example;
 
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.objdetect.CascadeClassifier;
-import org.opencv.videoio.VideoCapture;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
+import java.awt.event.ActionListener;
 
 public class Main {
-    private static JLabel imageLabel;
-    private static JProgressBar progressBar;
-    private static JLabel resultLabel;
-    private static final JPanel contentPanel = new JPanel();
 
-    static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
+
+    private static final String IMAGES_BASE_DIR = "./images";
+    private static final String VIDEOS_BASE_DIR = "./videos";
+    private static final String PHONE_VIDEOS_BASE_DIR = "./phone videos";
 
     public static void main(String[] args) {
-        TrafficSignDetector trafficSignDetector = new TrafficSignDetector(new CascadeClassifier("cascade/haarcascade_traffic_signs.xml"));
+        JFrame frame = createMainFrame();
 
-        String imagesBaseDir = "./images";
-        String videosBaseDir = "./videos";
-        String phoneVideosBaseDir = "./phone videos";
-
-        JFrame frame = new JFrame("traffic-sign-detector");
-        JPanel panel = new JPanel();
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setPreferredSize(new Dimension(progressBar.getPreferredSize().width, 100));
-        progressBar.setStringPainted(true);
-
-        JButton button1 = new JButton("Select generic image");
-        button1.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser(new File(imagesBaseDir));
-            int returnValue = fileChooser.showOpenDialog(null);
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                String relativePath = imagesBaseDir + "/" + selectedFile.getName();
-
-                Mat originalImage = Imgcodecs.imread(relativePath);
-                displayImage(frame, matToBufferedImage(originalImage));
-
-                Timer timer = new Timer(3000, event -> {
-                    Mat resultImage = trafficSignDetector.detectTrafficSigns(relativePath);
-                    if (resultImage != null) {
-                        displayImage(frame, matToBufferedImage(resultImage));
-                    }
-                });
-                timer.setRepeats(false);
-                timer.start();
-            }
+        JButton button1 = createButton("Select generic image", e -> {
+            FileProcessor.handleImageSelection(frame, IMAGES_BASE_DIR);
         });
-        panel.add(button1);
 
-        JButton button2 = new JButton("Select generic video");
-        button2.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser(new File(videosBaseDir));
-            int returnValue = fileChooser.showOpenDialog(null);
-            if(returnValue == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                String relativePath = videosBaseDir + "/" + selectedFile.getName();
-
-                removeImage(frame);
-
-                progressBar = new JProgressBar(0, 100);
-                progressBar.setPreferredSize(new Dimension(progressBar.getPreferredSize().width, 100));
-                progressBar.setStringPainted(true);
-                frame.add(progressBar, BorderLayout.SOUTH);
-
-                new Thread(() -> trafficSignDetector.detectTrafficSignsInVideo(relativePath, progressBar, frame)).start();
-            }
+        JButton button2 = createButton("Select generic video", e -> {
+            FileProcessor.handleVideoSelection(frame, VIDEOS_BASE_DIR);
         });
-        panel.add(button2);
 
-        JButton button3 = new JButton("Select phone video");
-        button3.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser(new File(phoneVideosBaseDir));
-            int returnValue = fileChooser.showOpenDialog(null);
-            if(returnValue == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                String parentDirName = selectedFile.getParentFile().getName();
-                String relativePath = phoneVideosBaseDir + "/" + parentDirName + "/" + selectedFile.getName();
-
-                removeImage(frame);
-
-                progressBar = new JProgressBar(0, 100);
-                progressBar.setPreferredSize(new Dimension(progressBar.getPreferredSize().width, 100));
-                progressBar.setStringPainted(true);
-                frame.add(progressBar, BorderLayout.SOUTH);
-
-                new Thread(() -> trafficSignDetector.detectTrafficSignsInVideo(relativePath, progressBar, frame)).start();
-            }
+        JButton button3 = createButton("Select phone video", e -> {
+            FileProcessor.handleVideoSelection(frame, PHONE_VIDEOS_BASE_DIR);
         });
-        panel.add(button3);
 
+        JPanel panel = createPanel(button1, button2, button3);
         frame.add(panel, BorderLayout.NORTH);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
-
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
-    private static BufferedImage matToBufferedImage(Mat mat){
-        int type = BufferedImage.TYPE_BYTE_GRAY;
-        if (mat.channels() > 1) {
-            type = BufferedImage.TYPE_3BYTE_BGR;
+    private static JFrame createMainFrame() {
+        JFrame frame = new JFrame("traffic-sign-detector");
+        frame.setLayout(new BorderLayout());
+        return frame;
+    }
+
+    private static JButton createButton(String text, ActionListener listener) {
+        JButton button = new JButton(text);
+        button.addActionListener(listener);
+        return button;
+    }
+
+    private static JPanel createPanel(Component... components) {
+        JPanel panel = new JPanel();
+        for (Component component : components) {
+            panel.add(component);
         }
-        int bufferSize = mat.channels() * mat.cols() * mat.rows();
-        byte[] b = new byte[bufferSize];
-        mat.get(0, 0, b);
-        BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), type);
-        final byte[] targetPixels = ((java.awt.image.DataBufferByte) image.getRaster().getDataBuffer()).getData();
-        System.arraycopy(b, 0, targetPixels, 0, b.length);
-        return image;
-    }
-
-    private static BufferedImage matToResizedBufferedImage(Mat mat){
-        int maxWidth = 1280;
-        int maxHeight = 1080;
-
-        int originalWidth = mat.width();
-        int originalHeight = mat.height();
-
-        double ratio = Math.min((double) maxWidth / originalWidth, (double) maxHeight / originalHeight);
-
-        int newWidth = (int) (originalWidth * ratio);
-        int newHeight = (int) (originalHeight * ratio);
-
-        Mat resizedMat = new Mat();
-        Size newSize = new Size(newWidth, newHeight);
-        Imgproc.resize(mat, resizedMat, newSize, 0, 0, Imgproc.INTER_AREA);
-
-        return matToBufferedImage(resizedMat);
-    }
-
-    private static void displayImage(JFrame frame, BufferedImage image) {
-        if (imageLabel == null) {
-            imageLabel = new JLabel(new ImageIcon(image));
-            contentPanel.add(imageLabel, BorderLayout.CENTER);
-        } else {
-            imageLabel.setIcon(new ImageIcon(image));
-        }
-        frame.add(contentPanel);
-        frame.revalidate();
-        frame.repaint();
-    }
-
-    private static void removeImage(JFrame frame) {
-        if (imageLabel != null) {
-            contentPanel.remove(imageLabel);
-            imageLabel = null;
-            contentPanel.revalidate();
-            contentPanel.repaint();
-            frame.remove(contentPanel);
-            frame.revalidate();
-            frame.repaint();
-        }
-    }
-
-    private static void displayImage(JPanel videoPanel, BufferedImage image) {
-        JLabel imageLabel = new JLabel(new ImageIcon(image));
-        videoPanel.removeAll();
-        videoPanel.add(imageLabel);
-        videoPanel.revalidate();
-        videoPanel.repaint();
-    }
-
-
-    public static void playVideo(JFrame frame, String videoPath) {
-        frame.remove(progressBar);
-        frame.revalidate();
-        frame.repaint();
-
-        resultLabel = new JLabel("Result video saved at " + videoPath);
-        resultLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        frame.add(resultLabel, BorderLayout.SOUTH);
-        frame.revalidate();
-        frame.repaint();
-        JPanel videoPanel = new JPanel();
-        frame.add(videoPanel, BorderLayout.CENTER);
-
-        new Thread(() -> {
-            VideoCapture videoCapture = new VideoCapture(videoPath);
-            if (!videoCapture.isOpened()) {
-                System.out.println("Could not open video: " + videoPath);
-                return;
-            }
-
-            Mat frameMat = new Mat();
-            while (videoCapture.read(frameMat)) {
-                BufferedImage image = matToResizedBufferedImage(frameMat);
-                SwingUtilities.invokeLater(() -> displayImage(videoPanel, image));
-                try {
-                    Thread.sleep(1000 / 60);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            videoCapture.release();
-
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            SwingUtilities.invokeLater(() -> {
-                frame.remove(videoPanel);
-                frame.remove(resultLabel);
-                frame.revalidate();
-                frame.repaint();
-            });
-        }).start();
+        return panel;
     }
 }

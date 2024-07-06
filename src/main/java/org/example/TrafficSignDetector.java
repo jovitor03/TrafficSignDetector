@@ -11,22 +11,17 @@ import org.opencv.videoio.Videoio;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 public class TrafficSignDetector {
-    private final CascadeClassifier cascade;
-    private final Scalar color = new Scalar(0, 255, 0);
-    private final JPanel containerPanel = new JPanel(new GridBagLayout());
-    private final JPanel labelsPanel = new JPanel();
-    private JLabel processingLabel;
-    private JLabel timeLabel;
+    private final static CascadeClassifier cascade = new CascadeClassifier("cascades/haarcascade_traffic_signs.xml");
+    private final static Scalar color = new Scalar(0, 255, 0);
+    private final static JPanel containerPanel = new JPanel(new GridBagLayout());
+    private final static JPanel labelsPanel = new JPanel();
+    private static JLabel processingLabel;
+    private static JLabel timeLabel;
 
-    public TrafficSignDetector(CascadeClassifier cascade) {
-        this.cascade = cascade;
-    }
-
-    public Mat detectTrafficSigns(String imagePath) {
-        String resultImagePath = mantainFormat(imagePath);
+    public static Mat detectTrafficSigns(String imagePath) {
+        String resultImagePath = FileProcessor.mantainFormat(imagePath);
 
         Mat image = Imgcodecs.imread(imagePath);
 
@@ -38,28 +33,11 @@ public class TrafficSignDetector {
         highlightTrafficSigns(image, cascade, color);
 
         Imgcodecs.imwrite(resultImagePath, image);
-        System.out.println("\nResult image saved at " + resultImagePath);
 
         return image;
     }
 
-    public static void clearFolder(String folderPath) {
-        File folder = new File(folderPath);
-        if (folder.exists() && folder.isDirectory()) {
-            File[] files = folder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile()) {
-                        file.delete();
-                    }
-                }
-            }
-        } else {
-            System.out.println("The specified path is not a valid directory.");
-        }
-    }
-
-    public void addLabelsOnInterface(JFrame frame, String estimatedTimeText) {
+    public static void addLabelsOnInterface(JFrame frame, String estimatedTimeText) {
         SwingUtilities.invokeLater(() -> {
             processingLabel = new JLabel("Processing video... It may take a while.");
             processingLabel.setFont(new Font("Arial", Font.PLAIN, 20));
@@ -84,9 +62,8 @@ public class TrafficSignDetector {
         });
     }
 
-
-    public void detectTrafficSignsInVideo(String videoPath, JProgressBar progressBar, JFrame frame) {
-        clearFolder("frames");
+    public static void detectTrafficSignsInVideo(String videoPath, JProgressBar progressBar, JFrame frame) {
+        FileProcessor.clearFolder("frames");
 
         String estimatedTimeText;
         if (videoPath.contains("/phone")) {
@@ -110,15 +87,13 @@ public class TrafficSignDetector {
         int frameRate = (int) videoCapture.get(Videoio.CAP_PROP_FPS);
         int totalFrames = (int) videoCapture.get(Videoio.CAP_PROP_FRAME_COUNT);
 
-        String resultVideoPath = mantainFormat(videoPath);
+        String resultVideoPath = FileProcessor.mantainFormat(videoPath);
 
         VideoWriter videoWriter = new VideoWriter(resultVideoPath, VideoWriter.fourcc('X', '2', '6', '4'), frameRate, new Size(frameWidth, frameHeight), true);
         if (!videoWriter.isOpened()) {
             System.out.println("\nCould not create video writer");
             return;
         }
-
-        System.out.println("\nProcessing video... It may take a while.");
 
         Mat frameMat = new Mat();
 
@@ -172,28 +147,10 @@ public class TrafficSignDetector {
             frame.repaint();
         });
 
-        SwingUtilities.invokeLater(() -> Main.playVideo(frame, resultVideoPath));
+        SwingUtilities.invokeLater(() -> VideoProcessor.playVideo(frame, resultVideoPath));
     }
 
-    public String mantainFormat(String path) {
-        String extension = "";
-        int i = path.lastIndexOf('.');
-        if (i > 0) {
-            extension = path.substring(i + 1);
-        }
-
-        String fileNameWithoutExtension = "";
-        int j = path.lastIndexOf(File.separator);
-        if (j >= 0 && i > j) {
-            fileNameWithoutExtension = path.substring(j + 1, i);
-        } else if (i > 0) {
-            fileNameWithoutExtension = path.substring(0, i);
-        }
-
-        return fileNameWithoutExtension + "_result." + extension;
-    }
-
-    public int highlightTrafficSigns(Mat image, CascadeClassifier cascade, Scalar color) {
+    public static int highlightTrafficSigns(Mat image, CascadeClassifier cascade, Scalar color) {
         MatOfRect trafficSigns = new MatOfRect();
         cascade.detectMultiScale(image, trafficSigns);
 
