@@ -67,7 +67,7 @@ public class TrafficSignDetector {
 
         String estimatedTimeText;
         if (videoPath.contains("/phone")) {
-            estimatedTimeText = "Estimated time: ~5 minutes";
+            estimatedTimeText = "Estimated time: ~3-5 minutes";
         } else if (videoPath.contains("/videos")) {
             estimatedTimeText = "Estimated time: ~1 minute";
         } else {
@@ -115,18 +115,6 @@ public class TrafficSignDetector {
             processedFrames++;
             int newPercentage = (processedFrames * 100) / totalFrames;
             if (newPercentage > percentage) {
-                StringBuilder progressBarConsole = new StringBuilder("[");
-                int progress = newPercentage / 2;
-                for (int i = 0; i < 50; i++) {
-                    if (i <= progress) {
-                        progressBarConsole.append("=");
-                    } else {
-                        progressBarConsole.append(" ");
-                    }
-                }
-                progressBarConsole.append("] ").append(newPercentage).append("%");
-                System.out.print("\r" + progressBarConsole);
-
                 SwingUtilities.invokeLater(() -> progressBar.setValue(newPercentage));
                 percentage = newPercentage;
             }
@@ -134,8 +122,6 @@ public class TrafficSignDetector {
 
         videoCapture.release();
         videoWriter.release();
-
-        System.out.println("\nResult video saved at " + resultVideoPath);
 
         SwingUtilities.invokeLater(() -> {
             progressBar.setValue(100);

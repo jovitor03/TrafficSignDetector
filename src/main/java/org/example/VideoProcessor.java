@@ -50,7 +50,7 @@ public class VideoProcessor {
             }
 
             Mat frameMat = new Mat();
-            Timer timer = new Timer(1000 / 60, null);
+            Timer timer = new Timer(1000 / 120, null);
 
             timer.addActionListener(e -> {
                 if (videoCapture.read(frameMat)) {
