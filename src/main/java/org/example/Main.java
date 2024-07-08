@@ -7,9 +7,7 @@ import org.opencv.core.Core;
  */
 public class Main {
 
-    /**
-     * Load OpenCV library.
-     */
+    // Load OpenCV library.
     static {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
